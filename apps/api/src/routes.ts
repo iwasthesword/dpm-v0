@@ -24,14 +24,14 @@ import { adminClinicsRoutes } from './modules/admin/admin-clinics.routes.js';
 import { adminDashboardRoutes } from './modules/admin/admin-dashboard.routes.js';
 
 export async function registerRoutes(fastify: FastifyInstance) {
-  // Health check
-  fastify.get('/health', async () => {
-    return { status: 'ok', timestamp: new Date().toISOString() };
-  });
-
   // API routes with /api prefix
   fastify.register(
     async (api) => {
+      // Health check (at /api/health)
+      api.get('/health', async () => {
+        return { status: 'ok', timestamp: new Date().toISOString() };
+      });
+
       // Public routes (no auth required)
       api.register(publicRoutes, { prefix: '/public' });
 
