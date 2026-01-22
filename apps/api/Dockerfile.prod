@@ -37,8 +37,8 @@ RUN npx prisma generate
 # Build with tsup
 RUN pnpm build
 
-# Compile seed.ts to seed.js for production (esbuild is available via tsup)
-RUN npx esbuild prisma/seed.ts --outfile=prisma/seed.js --format=esm --platform=node --bundle --external:@prisma/client --external:bcrypt
+# Compile seed.ts to seed.js for production using tsup
+RUN npx tsup prisma/seed.ts --format esm --outDir prisma --no-config
 
 # Deploy production dependencies only
 WORKDIR /app
