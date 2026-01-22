@@ -15,7 +15,6 @@ build/
 .env.local
 .env.*.local
 !.env.example
-!docker/.env.local
 
 # IDE
 .idea/
@@ -53,7 +52,8 @@ Thumbs.db
 # Docker volumes
 docker/data/
 
-# Docker local env files (keep docker/.env.local for testing)
+# Docker local env files
+docker/.env.local
 
 # Temporary Claude files
 tmpclaude-*
