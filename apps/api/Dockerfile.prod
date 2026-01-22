@@ -77,8 +77,8 @@ COPY --from=builder /prod/api/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/package.json ./
 
-# Copy Prisma schema and migrations (needed for prisma migrate deploy)
-COPY --from=builder /prod/api/prisma ./prisma
+# Copy Prisma schema, migrations, and seed (from source, not pnpm deploy)
+COPY --from=builder /app/apps/api/prisma ./prisma
 
 # Copy entrypoint script
 COPY apps/api/docker-entrypoint.sh ./
