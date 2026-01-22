@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.nuxt/
+.output/
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Database
+*.db
+*.sqlite
+
+# Generated files
+*.generated.*
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/migrations/**/migration_lock.toml
+
+# OS files
+Thumbs.db
+
+# Docker volumes
+docker/data/
+
+# Docker local env files
+docker/.env.local
+
+# Temporary Claude files
+tmpclaude-*
+**/tmpclaude-*
+
+# Playwright MCP artifacts
+.playwright-mcp/

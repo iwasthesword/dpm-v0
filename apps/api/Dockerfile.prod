@@ -1,0 +1,96 @@
+# =============================================================================
+# DPM API - Production Multi-Stage Dockerfile
+# =============================================================================
+# Build: docker build -f apps/api/Dockerfile.prod -t dpm-api:latest .
+# Final image: ~200MB (vs ~1GB for dev)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Build
+# -----------------------------------------------------------------------------
+FROM node:20-alpine AS builder
+
+# Install OpenSSL for Prisma and build tools
+RUN apk add --no-cache openssl
+
+WORKDIR /app
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files for dependency installation
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install all dependencies (including devDependencies for build)
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY apps/api/ ./apps/api/
+COPY packages/shared/ ./packages/shared/
+
+# Generate Prisma client
+WORKDIR /app/apps/api
+RUN npx prisma generate
+
+# Build with tsup
+RUN pnpm build
+
+# Deploy production dependencies only
+WORKDIR /app
+RUN pnpm --filter @dpm/api --prod deploy /prod/api
+
+# Copy all Prisma packages (client, CLI, engines, and all internal deps)
+RUN mkdir -p /prod/api/node_modules/@prisma /prod/api/node_modules/.bin && \
+    # Copy .prisma (generated client)
+    PRISMA_CLIENT_DIR=$(find /app/node_modules/.pnpm -maxdepth 1 -name "@prisma+client@*" -type d | head -1) && \
+    cp -r "$PRISMA_CLIENT_DIR/node_modules/.prisma" /prod/api/node_modules/ && \
+    # Copy all @prisma/* packages
+    for pkg in client engines debug generator-helper get-platform engines-version fetch-engine internals schema-files-loader; do \
+      PKG_DIR=$(find /app/node_modules/.pnpm -maxdepth 1 -name "@prisma+${pkg}@*" -type d | head -1) && \
+      if [ -n "$PKG_DIR" ] && [ -d "$PKG_DIR/node_modules/@prisma/$pkg" ]; then \
+        cp -r "$PKG_DIR/node_modules/@prisma/$pkg" /prod/api/node_modules/@prisma/; \
+        echo "Copied @prisma/$pkg"; \
+      fi; \
+    done && \
+    # Copy prisma CLI
+    PRISMA_CLI_DIR=$(find /app/node_modules/.pnpm -maxdepth 1 -name "prisma@*" -type d | head -1) && \
+    cp -r "$PRISMA_CLI_DIR/node_modules/prisma" /prod/api/node_modules/ && \
+    ln -sf ../prisma/build/index.js /prod/api/node_modules/.bin/prisma && \
+    echo "Copied prisma CLI"
+
+# -----------------------------------------------------------------------------
+# Stage 2: Production
+# -----------------------------------------------------------------------------
+FROM node:20-alpine
+
+# Install OpenSSL for Prisma runtime
+RUN apk add --no-cache openssl wget
+
+WORKDIR /app
+
+# Copy production dependencies (includes generated Prisma client)
+COPY --from=builder /prod/api/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/package.json ./
+
+# Copy Prisma schema and migrations (needed for prisma migrate deploy)
+COPY --from=builder /prod/api/prisma ./prisma
+
+# Copy entrypoint script
+COPY apps/api/docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
+# Set production environment
+ENV NODE_ENV=production
+
+EXPOSE 3001
+
+# Health check using wget (available in alpine)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
