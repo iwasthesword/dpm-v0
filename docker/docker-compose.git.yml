@@ -9,6 +9,10 @@
 # 5. Deploy
 #
 # Note: First deployment takes longer (building images)
+#
+# Post-deployment:
+# - Migrations and seed run automatically on API startup
+# - Default credentials: admin@demo.dpm.local / Admin@123
 # =============================================================================
 
 services:

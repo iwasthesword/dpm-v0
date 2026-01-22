@@ -8,8 +8,8 @@
 # 4. Deploy
 #
 # Post-deployment:
-# - Migrations run automatically on API startup
-# - Seed database: docker exec dpm-api npx prisma db seed
+# - Migrations and seed run automatically on API startup
+# - Default credentials: admin@demo.dpm.local / Admin@123
 # =============================================================================
 
 services:

@@ -7,6 +7,10 @@
 # 3. Compose path: docker/docker-compose.git.local.yml
 # 4. Configure environment variables
 # 5. Deploy
+#
+# Post-deployment:
+# - Migrations and seed run automatically on API startup
+# - Default credentials: admin@demo.dpm.local / Admin@123
 # =============================================================================
 
 services:
