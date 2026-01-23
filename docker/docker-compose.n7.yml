@@ -109,12 +109,9 @@ services:
       CORS_ORIGIN: https://${DOMAIN:-dpm.n7.digital}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - postgres
+      - redis
+      - minio
     networks:
       - N7Digital
     labels:
